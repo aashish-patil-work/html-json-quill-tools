@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Delta JSON → JSON String</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f7f7f7;
+    }
+    textarea {
+      width: 100%;
+      height: 220px;
+      margin-bottom: 10px;
+      font-family: monospace;
+      padding: 10px;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      overflow: auto;
+      max-height: 300px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .error {
+      color: red;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Quill Delta JSON → JSON String</h2>
+
+  <p>Paste your <strong>valid Delta JSON</strong> below:</p>
+
+  <textarea id="input" placeholder='{
+  "ops": [
+    { "insert": "Hello\n" }
+  ]
+}'></textarea>
+
+  <button onclick="convert()">Convert to String</button>
+
+  <h3>JSON String Output</h3>
+  <pre id="output"></pre>
+
+  <script>
+    function convert() {
+      const input = document.getElementById("input").value.trim();
+      const output = document.getElementById("output");
+
+      try {
+        // Parse to ensure valid JSON
+        const json = JSON.parse(input);
+
+        // Convert to safely escaped JSON string
+        const jsonString = JSON.stringify(json);
+
+        output.textContent = jsonString;
+        output.className = "";
+      } catch (err) {
+        output.textContent = "❌ Invalid JSON:\n\n" + err.message;
+        output.className = "error";
+      }
+    }
+  </script>
+
+</body>
+</html>

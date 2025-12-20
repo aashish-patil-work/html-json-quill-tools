@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JSON String → JSON Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f7f7f7;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 10px;
+      font-family: monospace;
+      padding: 10px;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      overflow: auto;
+      max-height: 300px;
+    }
+    .error {
+      color: red;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>JSON String → JSON Object Converter</h2>
+
+  <p>Paste your JSON string below (Quill Delta or any JSON):</p>
+
+  <textarea id="input" placeholder='{"ops":[{"insert":"Hello\n"}]}'></textarea>
+
+  <button onclick="convert()">Convert</button>
+
+  <h3>Result</h3>
+  <pre id="output"></pre>
+
+  <script>
+    function convert() {
+      const input = document.getElementById("input").value.trim();
+      const output = document.getElementById("output");
+
+      try {
+        let parsed = JSON.parse(input);
+
+        // Handle double-stringified JSON
+        if (typeof parsed === "string") {
+          parsed = JSON.parse(parsed);
+        }
+
+        output.textContent = JSON.stringify(parsed, null, 2);
+        output.className = "";
+      } catch (err) {
+        output.textContent = "❌ Invalid JSON:\n\n" + err.message;
+        output.className = "error";
+      }
+    }
+  </script>
+
+</body>
+</html>

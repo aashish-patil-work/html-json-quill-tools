@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Quill Delta → HTML Preview</title>
+  <script
+    src="https://cdn.jsdelivr.net/npm/quill-delta-to-html@0.12.0/dist/browser/QuillDeltaToHtmlConverter.bundle.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: #f6f8fb;
+      margin: 20px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    button {
+      margin: 10px 0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: white;
+    }
+
+    #output {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      min-height: 120px;
+    }
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Quill Delta → HTML Preview</h2>
+  <div class="grid">
+    <label for="deltaInput"><b>Paste Delta JSON below:</b></label>
+    <textarea id="deltaInput" placeholder='Example:
+{
+  "ops": [
+    { "insert": "Hello " },
+    { "insert": "world", "attributes": { "bold": true } },
+    { "insert": "!" }
+  ]
+}'></textarea>
+
+    <button id="convertBtn">Convert to HTML</button>
+
+    <div>
+      <b>Preview:</b>
+      <div id="output"></div>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("deltaInput");
+    const output = document.getElementById("output");
+    const button = document.getElementById("convertBtn");
+
+    button.addEventListener("click", () => {
+      try {
+        const json = JSON.parse(input.value.trim());
+        console.log("**Convert Called**", JSON.stringify(json));
+
+        /**
+       * Finds and extracts the HTML content of all 'adBlock' custom embeds 
+       * from a Quill Delta JSON object.
+       * * @param {string | object} delta The Quill Delta JSON string or parsed object.
+       * @returns {string[]} An array of HTML strings found under the 'adBlock' key.
+       */
+        function extractAdBlockHtml(delta) {
+          let parsedDelta;
+
+          // 1. Ensure the input is a parsed object
+          if (typeof delta === 'string') {
+            try {
+              parsedDelta = JSON.parse(delta);
+            } catch (e) {
+              console.error("Invalid JSON provided to extractAdBlockHtml:", e);
+              return [];
+            }
+          } else if (typeof delta === 'object' && delta !== null) {
+            parsedDelta = delta;
+          } else {
+            return [];
+          }
+
+          const adBlocks = [];
+
+          // 2. Check if the Delta has an 'ops' array
+          if (parsedDelta.ops && Array.isArray(parsedDelta.ops)) {
+            // 3. Iterate through all operations
+            for (const op of parsedDelta.ops) {
+              // Check for an insert object that contains the 'adBlock' key
+              if (op.insert && typeof op.insert === 'object' && op.insert.adBlock) {
+                // 4. Extract and store the HTML string
+                adBlocks.push(op.insert.adBlock);
+              }
+            }
+          }
+
+          return adBlocks;
+        }
+
+        const converter = new QuillDeltaToHtmlConverter(json.ops, {
+          // 1. Define 'adBlock' as a custom block embed
+          customEmbeds: [
+            { key: 'adBlock', renderAsBlock: true }
+          ],
+          // 2. Provide the custom renderer function
+          customRenderers: {
+            // Make sure the key here ('adBlock') matches the insert key in your Delta
+            adBlock: (op) => {
+              console.log("*** Custom renderer for adBlock called ***");
+              // *** FIX: Access the correct property: op.insert.adBlock ***
+              return op.insert.adBlock || '';
+            }
+          }
+        });
+
+        // Use the function to extract all ad block HTML strings
+        const adBlockArray = extractAdBlockHtml(json);
+
+        var adBlockIndex = -1;  
+        converter.renderCustomWith(function (adBlockOp) {
+          console.log("Custom render called for:", adBlockOp);
+          if (adBlockOp.insert.type === "adBlock") {
+            adBlockIndex++;
+            return adBlockArray[adBlockIndex];
+          } else {
+            console.log("custom blot convert error");
+          }
+        });
+        const html = converter.convert();
+        output.innerHTML = html;
+
+      } catch (e) {
+        output.innerHTML = "<span style='color:red'>Invalid JSON or Delta format</span>";
+        console.error(e);
+      }
+    });
+  </script>
+
+</body>
+
+</html>
